@@ -5,8 +5,21 @@ Converts the World Bank indicators for Development into Mirador format
 @copyright: Fathom Information Design 2014
 '''
 
-# World Development Indicators and Global Development
-# https://opendata.socrata.com/dataset/The-World-Bank-Data/7i2g-w9ma
+# World Development Indicators
+# http://data.worldbank.org/data-catalog/world-development-indicators
+# http://databank.worldbank.org/data/download/WDI_csv.zip
+
+# Gender Statistics
+# http://data.worldbank.org/data-catalog/gender-statistics
+# http://databank.worldbank.org/data/download/Gender_Stats_csv.zip
+
+# Education Statistics
+# http://data.worldbank.org/data-catalog/ed-stats
+# http://databank.worldbank.org/data/download/Edstats_csv.zip
+
+# Health Nutrition and Population Statistics
+# http://data.worldbank.org/data-catalog/health-nutrition-and-population-statistics
+# http://databank.worldbank.org/data/download/hnp_stats_csv.zip
 
 import sys, os, csv, codecs
 from xml.dom.minidom import parseString
@@ -19,6 +32,9 @@ def write_xml_line(line):
     xml_file.write(ascii_line + '\n')
     xml_strings.append(ascii_line + '\n')
 
+source_folder = 'source/'
+output_folder = 'mirador/'
+
 var_codes = []
 var_titles = {'COUNTRY':'Country', 'YEAR':'Year'}
 var_types = {'COUNTRY':'String', 'YEAR':'int'}
@@ -26,19 +42,20 @@ country_codes = []
 country_names = {}
 all_data = {}
 
-reader = csv.reader(open('The_World_Bank__Data.csv', 'r'), dialect='excel')
+print 'Reading data...'
+reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Data.csv', 'r'), dialect='excel')
 titles = reader.next()
 years = titles[4: len(titles)]
 for row in reader:
-    code = row[0].upper()
-    country = row[2].upper()
+    code = row[3].upper()
+    country = row[1].upper()
     if not code in var_codes:
         var_codes.append(code)
-        var_titles[code] = row[1]
+        var_titles[code] = row[2]
         var_types[code] = 'int'
     if not country in country_codes:
         country_codes.append(country)        
-        country_names[country] = row[3]
+        country_names[country] = row[0]
     
     for i in range(4, len(titles)):
         year = titles[i]
@@ -59,6 +76,7 @@ for row in reader:
                     pass
         else:    
             dat[code] = '\\N'
+print 'Done.'
         
 # for var in var_codes:
 #     print var, var_titles[var]
@@ -70,8 +88,12 @@ for row in reader:
 #print all_data
 #print years
 
+# Remove binary file, just in case
+if os.path.isfile(output_folder + 'data.bin'):
+    os.remove(output_folder + 'data.bin')
+
 print 'Creating data file...'
-writer = csv.writer(open('data.tsv', 'w'), dialect='excel-tab')    
+writer = csv.writer(open(output_folder + 'data.tsv', 'w'), dialect='excel-tab')    
 all_titles = ['COUNTRY', 'YEAR']
 all_titles.extend(var_codes)
 writer.writerow(all_titles)
@@ -92,7 +114,7 @@ for country in country_codes:
 print 'Done.'
                
 print "Creating dictionary file..."               
-dfile = open('dictionary.tsv', 'w')
+dfile = open(output_folder + 'dictionary.tsv', 'w')
 for var in all_titles:
     line = var_titles[var] + '\t' + var_types[var]
     if var == 'COUNTRY':
