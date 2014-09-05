@@ -35,19 +35,25 @@ def write_xml_line(line):
 source_folder = 'source/'
 output_folder = 'mirador/'
 
+label_var = 'CTY.NAME.LONG'
 var_codes = []
-var_names = {'COUNTRY':'Country', 'YEAR':'Year'}
-var_types = {'COUNTRY':'String', 'YEAR':'int'}
+key_vars = ['CTY.NAME.SHORT', 'CTY.NAME.LONG', 'CTY.REGION', 'CTY.INC_GRP', 'YEAR']
+var_names = {'CTY.NAME.SHORT':'Country short name', 'CTY.NAME.LONG':'Country long name', 'CTY.REGION':'Country region', 'CTY.INC_GRP':'Income group','YEAR':'Year'}
+var_types = {'CTY.NAME.SHORT':'category', 'CTY.NAME.LONG':'String', 'CTY.REGION':'category', 'CTY.INC_GRP':'category', 'YEAR':'int'}
 
 var_tree = {}
 var_groups = []
 
 country_codes = []
-country_names = {}
+country_short_names = {}
+country_long_names = {}
+country_regions = {}
+income_groups = {}
+
 all_data = {}
 
 print 'Create data tree...'
-var_tree['Keys'] = {'Countries and years':['COUNTRY' ,'YEAR']}
+var_tree['Keys'] = {'Countries and years':key_vars}
 var_groups.append('Keys')
 reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Series.csv', 'r'), dialect='excel')
 reader.next()
@@ -82,12 +88,36 @@ for row in reader:
                              
 print 'Done.'
                              
-print var_groups
+#print var_groups
 
 # sys.exit(0)
 
+print 'Reading country metadata...'
+reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Country.csv', 'r'), dialect='excel')
+reader.next()
+for row in reader:
+    code = row[0]
+    short_name = row[1]
+    long_name = row[3]    
+    region = row[7]
+    group = row[8]
+    
+    if 'aggregate' in region:
+        print '  Aggregate region ' + short_name +', skipping.'
+        continue
+    
+    country_codes.append(code)
+    country_short_names[code] = short_name
+    country_long_names[code] = long_name
+    
+    country_regions[code] = region
+    income_groups[code] = group
+
+print 'Done.'
+
 print 'Reading data...'
 missing_vars = Set([])
+missing_countries = Set([])
 reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Data.csv', 'r'), dialect='excel')
 titles = reader.next()
 years = titles[4: len(titles)]
@@ -101,9 +131,11 @@ for row in reader:
         continue        
 
     if not country in country_codes:
-        country_codes.append(country)        
-        country_names[country] = row[0]
-    
+        if not country in missing_countries:
+            print '  Country ' + country + ' is missing from dictionary, skipping'
+            missing_countries.add(country)
+        continue
+            
     for i in range(4, len(titles)):
         year = titles[i]
         key = country + ':' + year
@@ -143,12 +175,22 @@ if os.path.isfile(output_folder + 'data.bin'):
 
 print 'Creating data file...'
 writer = csv.writer(open(output_folder + 'data.tsv', 'w'), dialect='excel-tab')    
-all_titles = ['COUNTRY', 'YEAR']
+all_titles = []
+all_titles.extend(key_vars)
 all_titles.extend(var_codes)
 writer.writerow(all_titles)
 for country in country_codes:
     for year in years:
-        row = [country_names[country], year]
+    
+#         country_short_names[code] = short_name
+#     country_long_names[code] = long_name
+#     
+#     country_regions[code] = region
+#     income_groups[code] = group
+    
+    
+        row = [country_short_names[country], country_long_names[country], country_regions[country], income_groups[country], year]
+        
         key = country + ':' + year
         if key in all_data:
             row_data = all_data[key]
@@ -166,7 +208,7 @@ print 'Creating dictionary file...'
 dfile = open(output_folder + 'dictionary.tsv', 'w')
 for var in all_titles:
     line = var_names[var] + '\t' + var_types[var]
-    if var == 'COUNTRY':
+    if var == label_var:
         line = line + '\tlabel'
     line = line + '\n'   
     dfile.write(line)  

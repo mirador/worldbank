@@ -4,7 +4,6 @@ data.source=data.tsv
 data.dictionary=dictionary.tsv
 data.groups=groups.xml
 data.binary=data.bin
-data.key=COUNTRY
 missing.string=\N
 missing.threshold=MISS_80
 correlation.pvalue=P0_01
