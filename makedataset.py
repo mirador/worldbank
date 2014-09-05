@@ -36,13 +36,58 @@ source_folder = 'source/'
 output_folder = 'mirador/'
 
 var_codes = []
-var_titles = {'COUNTRY':'Country', 'YEAR':'Year'}
+var_names = {'COUNTRY':'Country', 'YEAR':'Year'}
 var_types = {'COUNTRY':'String', 'YEAR':'int'}
+
+var_tree = {}
+var_groups = []
+
 country_codes = []
 country_names = {}
 all_data = {}
 
+print 'Create data tree...'
+var_tree['Keys'] = {'Countries and years':['COUNTRY' ,'YEAR']}
+var_groups.append('Keys')
+reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Series.csv', 'r'), dialect='excel')
+reader.next()
+for row in reader:
+    code = row[0].upper()
+    name = row[3]
+    topic = row[1]
+    parts = topic.split(':')
+    if len(parts) < 2: 
+        print '  Variable ' + code + ' does not have properly formatted topic: "' + topic + '", so it won\'t be included.'
+        continue
+    group = parts[0].strip().replace('&', 'and')
+    table = parts[1].strip().replace('&', 'and')    
+    
+    if group in var_tree:
+        tables = var_tree[group]
+    else:
+        tables = {}
+        var_tree[group] = tables
+        var_groups.append(group)
+    
+    if table in tables:
+        variables = tables[table]
+    else:
+        variables = []
+        tables[table] = variables
+        
+    variables.append(code)
+    var_codes.append(code)    
+    var_names[code] = name
+    var_types[code] = 'int'
+                             
+print 'Done.'
+                             
+print var_groups
+
+# sys.exit(0)
+
 print 'Reading data...'
+missing_vars = Set([])
 reader = csv.reader(open(source_folder + 'WDI_csv/WDI_Data.csv', 'r'), dialect='excel')
 titles = reader.next()
 years = titles[4: len(titles)]
@@ -50,9 +95,11 @@ for row in reader:
     code = row[3].upper()
     country = row[1].upper()
     if not code in var_codes:
-        var_codes.append(code)
-        var_titles[code] = row[2]
-        var_types[code] = 'int'
+        if not code in missing_vars:
+            print '  Variable ' + code + ' is missing from dictionary, skipping'
+            missing_vars.add(code);
+        continue        
+
     if not country in country_codes:
         country_codes.append(country)        
         country_names[country] = row[0]
@@ -79,7 +126,7 @@ for row in reader:
 print 'Done.'
         
 # for var in var_codes:
-#     print var, var_titles[var]
+#     print var, var_names[var]
 # 
 # for country in country_codes:
 #     print country, country_names[country]    
@@ -91,6 +138,8 @@ print 'Done.'
 # Remove binary file, just in case
 if os.path.isfile(output_folder + 'data.bin'):
     os.remove(output_folder + 'data.bin')
+
+# sys.exit(0)
 
 print 'Creating data file...'
 writer = csv.writer(open(output_folder + 'data.tsv', 'w'), dialect='excel-tab')    
@@ -113,14 +162,46 @@ for country in country_codes:
         writer.writerow(row)
 print 'Done.'
                
-print "Creating dictionary file..."               
+print 'Creating dictionary file...'
 dfile = open(output_folder + 'dictionary.tsv', 'w')
 for var in all_titles:
-    line = var_titles[var] + '\t' + var_types[var]
+    line = var_names[var] + '\t' + var_types[var]
     if var == 'COUNTRY':
         line = line + '\tlabel'
     line = line + '\n'   
     dfile.write(line)  
 dfile.close()
-print 'Done.'    
-    
+print 'Done.'
+
+
+
+
+print 'Creating groups file...'
+
+# Writing file in utf-8 because the input html files from
+# NHANES website sometimes have characters output the ASCII range.
+xml_file = codecs.open(output_folder + 'groups.xml', 'w', 'utf-8')
+xml_strings = []
+write_xml_line('<?xml version="1.0"?>')
+write_xml_line('<data>')
+for group in var_groups:
+    write_xml_line(' <group name="' + group + '">')
+    tables = var_tree[group]
+    for table in tables:
+        write_xml_line('  <table name="' + table + '">')        
+        variables = tables[table] 
+        for var in variables:
+            write_xml_line('   <variable name="' + var + '"/>')        
+        write_xml_line('  </table>')
+    write_xml_line(' </group>')
+write_xml_line('</data>')    
+xml_file.close()
+
+# XML validation.
+try:
+    doc = parseString(''.join(xml_strings))
+    doc.toxml()
+    print 'Done.' 
+except:
+    sys.stderr.write('XML validation error:\n')
+    raise    
