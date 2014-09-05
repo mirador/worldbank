@@ -1,5 +1,5 @@
-project.title=World Development Indicators and Global Development
-project.url=https://opendata.socrata.com/dataset/The-World-Bank-Data/7i2g-w9ma
+project.title=World Development Indicators
+project.url=http://datacatalog.worldbank.org/
 data.source=data.tsv
 data.dictionary=dictionary.tsv
 data.groups=
