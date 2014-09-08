@@ -35,18 +35,17 @@ def write_xml_line(line):
 source_folder = 'source/'
 output_folder = 'mirador/'
 
-label_var = 'CTY.NAME.LONG'
+label_var = 'NAME'
 var_codes = []
-key_vars = ['CTY.NAME.SHORT', 'CTY.NAME.LONG', 'CTY.REGION', 'CTY.INC_GRP', 'YEAR']
-var_names = {'CTY.NAME.SHORT':'Country short name', 'CTY.NAME.LONG':'Country long name', 'CTY.REGION':'Country region', 'CTY.INC_GRP':'Income group','YEAR':'Year'}
-var_types = {'CTY.NAME.SHORT':'category', 'CTY.NAME.LONG':'String', 'CTY.REGION':'category', 'CTY.INC_GRP':'category', 'YEAR':'int'}
+key_vars = ['NAME', 'REGION', 'INCOME', 'YEAR']
+var_names = {'NAME':'Country name', 'REGION':'Region', 'INCOME':'Income group','YEAR':'Year'}
+var_types = {'NAME':'String', 'REGION':'category', 'INCOME':'category', 'YEAR':'int'}
 
 var_tree = {}
 var_groups = []
 
 country_codes = []
-country_short_names = {}
-country_long_names = {}
+country_names = {}
 country_regions = {}
 income_groups = {}
 
@@ -99,16 +98,16 @@ for row in reader:
     code = row[0]
     short_name = row[1]
     long_name = row[3]    
+    notes = row[6]
     region = row[7]
     group = row[8]
     
-    if 'aggregate' in region:
+    if 'aggregate' in notes:
         print '  Aggregate region ' + short_name +', skipping.'
         continue
     
     country_codes.append(code)
-    country_short_names[code] = short_name
-    country_long_names[code] = long_name
+    country_names[code] = short_name
     
     country_regions[code] = region
     income_groups[code] = group
@@ -189,7 +188,7 @@ for country in country_codes:
 #     income_groups[code] = group
     
     
-        row = [country_short_names[country], country_long_names[country], country_regions[country], income_groups[country], year]
+        row = [country_names[country], country_regions[country], income_groups[country], year]
         
         key = country + ':' + year
         if key in all_data:
