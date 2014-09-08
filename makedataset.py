@@ -1,24 +1,27 @@
 '''
-Converts the World Bank indicators for Development into Mirador format
+Converts several datasets from World Bank into Mirador format
+
+World Development Indicators
+http://data.worldbank.org/data-catalog/world-development-indicators
+http://databank.worldbank.org/data/download/WDI_csv.zip
+
+Health Nutrition and Population Statistics
+http://data.worldbank.org/data-catalog/health-nutrition-and-population-statistics
+http://databank.worldbank.org/data/download/hnp_stats_csv.zip
+
+Gender Statistics
+http://data.worldbank.org/data-catalog/gender-statistics
+http://databank.worldbank.org/data/download/Gender_Stats_csv.zip
+
+Education Statistics are skipped for the time being because the time series are not in the
+1960-present range.
+http://data.worldbank.org/data-catalog/ed-stats
+http://databank.worldbank.org/data/download/Edstats_csv.zip
+
+TODO: automatically download and unzip files from data catalog page.
 
 @copyright: Fathom Information Design 2014
 '''
-
-# World Development Indicators
-# http://data.worldbank.org/data-catalog/world-development-indicators
-# http://databank.worldbank.org/data/download/WDI_csv.zip
-
-# Gender Statistics
-# http://data.worldbank.org/data-catalog/gender-statistics
-# http://databank.worldbank.org/data/download/Gender_Stats_csv.zip
-
-# Education Statistics
-# http://data.worldbank.org/data-catalog/ed-stats
-# http://databank.worldbank.org/data/download/Edstats_csv.zip
-
-# Health Nutrition and Population Statistics
-# http://data.worldbank.org/data-catalog/health-nutrition-and-population-statistics
-# http://databank.worldbank.org/data/download/hnp_stats_csv.zip
 
 import sys, os, csv, codecs
 from xml.dom.minidom import parseString
@@ -91,7 +94,12 @@ def read_data(filename, all_data, all_years, var_codes, country_codes, missing_v
     print '  Reading ' + filename + '...'
     reader = csv.reader(open(filename, 'r'), dialect='excel')
     titles = reader.next()
-    all_years = titles[4: len(titles)]
+    
+    years = titles[4: len(titles)]
+    if len(all_years) == 0:
+        all_years.extend(years)
+    elif len(all_years) != len(years):    
+        raise Exception('Inconsistent number of years! ' + str(len(all_years)) + ' ' + str(len(years)))
 
     for row in reader:
         code = row[3].upper()
@@ -116,7 +124,9 @@ def read_data(filename, all_data, all_years, var_codes, country_codes, missing_v
             else:
                 dat = {}
                 all_data[key] = dat
-            if row[i] != '':    
+            if row[i] != '':
+#                 if code in dat and dat[code] != row[i]:
+#                     print '    Warning: data inconsistency for variable ' + code + ': ' + dat[code] + ' ' + row[i]                
                 dat[code] = row[i]
                 if var_types[code] == 'int':
                     try:
@@ -150,7 +160,6 @@ def write_data(dat_filename, bin_filename, country_codes, all_titles, all_years,
             else:
                 row.extend(['\\N'] * len(var_codes))
             writer.writerow(row)
-    print 'Done.'
 
 def write_dict(filename, all_titles, var_names, var_types):
     print '  Creating dictionary file ' + filename + '...'
@@ -221,10 +230,16 @@ print 'Create data tree...'
 var_tree['Keys'] = {'Countries and years':key_vars}
 var_groups.append('Keys')
 read_variables(source_folder + 'WDI_csv/WDI_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+read_variables(source_folder + 'hnp_stats_csv/HNP_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+read_variables(source_folder + 'Gender_Stats_csv/Gender_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+#read_variables(source_folder + 'Edstats_csv/EDStats_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
 print 'Done.'
 
 print 'Reading data...'
 read_data(source_folder + 'WDI_csv/WDI_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+read_data(source_folder + 'hnp_stats_csv/HNP_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+read_data(source_folder + 'Gender_Stats_csv/Gender_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+#read_data(source_folder + 'Edstats_csv/Edstat_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
 print 'Done.'
 
 print 'Writing Mirador dataset...'
