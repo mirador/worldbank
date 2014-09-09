@@ -1,4 +1,4 @@
-# WORLD BANK DATA SCRIPTS 
+## WORLD BANK DATA SCRIPTS 
 
 This set of Python scripts downloads, parses, and aggregates datasets from the World Bank's Open 
 Data initiative (http://datacatalog.worldbank.org/), and outputs the data as a Mirador dataset.
@@ -12,14 +12,14 @@ It aggregates the following World Bank datasets:
 which contain yearly data from 1960 until the present and are updated quarterly, except the 
 HNP statistics which are updated biannually.
 
-## DEPENDENCIES
+### DEPENDENCIES
 
 The scripts have the following dependencies:
 
 1. Python 2.7.3+ (not tested with 3+) and the following package:
   * Requests: http://docs.python-requests.org/en/latest/index.html 
   
-## USAGE
+### USAGE
 
 **1)** Download and extract the zip files:
 
