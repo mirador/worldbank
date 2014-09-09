@@ -1,24 +1,6 @@
 '''
 Converts several datasets from World Bank into Mirador format
 
-World Development Indicators
-http://data.worldbank.org/data-catalog/world-development-indicators
-http://databank.worldbank.org/data/download/WDI_csv.zip
-
-Health Nutrition and Population Statistics
-http://data.worldbank.org/data-catalog/health-nutrition-and-population-statistics
-http://databank.worldbank.org/data/download/hnp_stats_csv.zip
-
-Gender Statistics
-http://data.worldbank.org/data-catalog/gender-statistics
-http://databank.worldbank.org/data/download/Gender_Stats_csv.zip
-
-Education Statistics
-http://data.worldbank.org/data-catalog/ed-stats
-http://databank.worldbank.org/data/download/Edstats_csv.zip
-
-TODO: automatically download and unzip files from data catalog page.
-
 @copyright: Fathom Information Design 2014
 '''
 
@@ -248,10 +230,16 @@ def write_grp(filename, var_tree, var_groups):
 
 source_folder = 'source/'
 output_folder = 'mirador/'
-add_hnp = True
-add_genstats = True
-add_edstats = True
+add_hnp = False
+add_genstats = False
+add_edstats = False
 
+for arg in sys.argv[1: len(sys.argv)]:
+    print arg
+    if arg == '-hnp': add_hnp = True   
+    if arg == '-gender': add_genstats = True
+    if arg == '-edu': add_edstats = True
+    
 country_codes = []
 country_names = {}
 country_regions = {}
@@ -269,9 +257,6 @@ all_data = {}
 all_years = []
 missing_vars = Set([])
 missing_countries = Set([])
-
-if not os.path.exists(source_folder):
-    os.makedirs(source_folder)
 
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
