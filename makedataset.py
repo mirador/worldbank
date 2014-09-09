@@ -67,7 +67,41 @@ def read_variables(filename, var_tree, var_groups, var_codes, var_names, var_typ
             var_codes.append(code)    
             var_names[code] = name
             var_types[code] = 'int'
-
+            
+def read_education_variables(filename, var_tree, var_groups, var_codes, var_names, var_types):            
+    topics = ['Education Inequity', 'Educational Attainment', 'Equity', 'Expenditures', 'Learning Outcomes', 'Literacy', 'Pre-Primary', 'Primary', 'Secondary', 'Teachers', 'Tertiary']
+    print '  Reading education variables from ' + filename + '...'
+    reader = csv.reader(open(filename, 'r'), dialect='excel')
+    reader.next()
+    for row in reader:
+        code = row[0].upper()
+        name = row[3]
+        topic = row[1]
+        if not topic in topics:
+            print '    Topic "' + topic + '" not supported for education data.'
+            continue
+        group = 'Education'
+        table = topic
+    
+        if group in var_tree:
+            tables = var_tree[group]
+        else:
+            tables = {}
+            var_tree[group] = tables
+            var_groups.append(group)
+    
+        if table in tables:
+            variables = tables[table]
+        else:
+            variables = []
+            tables[table] = variables
+        
+        if not code in variables:
+            variables.append(code)
+            var_codes.append(code)    
+            var_names[code] = name
+            var_types[code] = 'int'
+            
 def read_countries(filename, country_codes, country_names, country_regions, income_groups):
     print '  Reading ' + filename + '...'
     reader = csv.reader(open(filename, 'r'), dialect='excel')
@@ -98,8 +132,12 @@ def read_data(filename, all_data, all_years, var_codes, country_codes, missing_v
     years = titles[4: len(titles)]
     if len(all_years) == 0:
         all_years.extend(years)
-    elif len(all_years) != len(years):    
-        raise Exception('Inconsistent number of years! ' + str(len(all_years)) + ' ' + str(len(years)))
+#     elif len(all_years) != len(years):    
+#         raise Exception('Inconsistent number of years! ' + str(len(all_years)) + ' ' + str(len(years)))
+
+    year0 = int(all_years[0])
+    year1 = int(titles[4])
+    ydiff = year1 - year0     
 
     for row in reader:
         code = row[3].upper()
@@ -116,14 +154,22 @@ def read_data(filename, all_data, all_years, var_codes, country_codes, missing_v
                 missing_countries.add(country)
             continue
             
-        for i in range(4, len(titles)):
-            year = titles[i]
+#         for i in range(4, len(titles)):
+        for y in range(0, len(all_years)):
+        
+            year = all_years[y]
             key = country + ':' + year
             if key in all_data:
                 dat = all_data[key]
             else:
                 dat = {}
                 all_data[key] = dat
+                
+            if y < ydiff:     
+                dat[code] = '\\N'
+                continue
+              
+            i = 4 + y - ydiff
             if row[i] != '':
 #                 if code in dat and dat[code] != row[i]:
 #                     print '    Warning: data inconsistency for variable ' + code + ': ' + dat[code] + ' ' + row[i]                
@@ -232,14 +278,14 @@ var_groups.append('Keys')
 read_variables(source_folder + 'WDI_csv/WDI_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
 read_variables(source_folder + 'hnp_stats_csv/HNP_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
 read_variables(source_folder + 'Gender_Stats_csv/Gender_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
-#read_variables(source_folder + 'Edstats_csv/EDStats_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+read_education_variables(source_folder + 'Edstats_csv/EDStats_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
 print 'Done.'
 
 print 'Reading data...'
 read_data(source_folder + 'WDI_csv/WDI_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
 read_data(source_folder + 'hnp_stats_csv/HNP_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
 read_data(source_folder + 'Gender_Stats_csv/Gender_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
-#read_data(source_folder + 'Edstats_csv/Edstat_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+read_data(source_folder + 'Edstats_csv/Edstat_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
 print 'Done.'
 
 print 'Writing Mirador dataset...'
