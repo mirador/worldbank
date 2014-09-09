@@ -39,3 +39,5 @@ parameters. For example, to add HNP and Gender statistics to the base WDI data, 
 ```bash
 python makedataset.py -hnp -gender
 ```
+
+The resulting Mirador dataset will be saved in the mirador folder.
