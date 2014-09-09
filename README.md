@@ -1,7 +1,7 @@
 ## WORLD BANK DATA SCRIPTS 
 
-This set of Python scripts downloads, parses, and aggregates datasets from the World Bank's Open 
-Data initiative (http://datacatalog.worldbank.org/), and outputs the data as a Mirador dataset.
+This set of Python scripts downloads, parses, and aggregates datasets from the [World Bank's Open 
+Data initiative](http://datacatalog.worldbank.org/), and outputs the data as a Mirador dataset.
 It aggregates the following World Bank datasets:
 
 1. World Development Indicators (WDI): http://data.worldbank.org/data-catalog/world-development-indicators
