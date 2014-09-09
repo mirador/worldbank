@@ -13,8 +13,7 @@ Gender Statistics
 http://data.worldbank.org/data-catalog/gender-statistics
 http://databank.worldbank.org/data/download/Gender_Stats_csv.zip
 
-Education Statistics are skipped for the time being because the time series are not in the
-1960-present range.
+Education Statistics
 http://data.worldbank.org/data-catalog/ed-stats
 http://databank.worldbank.org/data/download/Edstats_csv.zip
 
@@ -23,7 +22,7 @@ TODO: automatically download and unzip files from data catalog page.
 @copyright: Fathom Information Design 2014
 '''
 
-import sys, os, csv, codecs
+import sys, os, csv, codecs, shutil
 from xml.dom.minidom import parseString
 from sets import Set
 
@@ -249,6 +248,9 @@ def write_grp(filename, var_tree, var_groups):
 
 source_folder = 'source/'
 output_folder = 'mirador/'
+add_hnp = True
+add_genstats = True
+add_edstats = True
 
 country_codes = []
 country_names = {}
@@ -268,6 +270,14 @@ all_years = []
 missing_vars = Set([])
 missing_countries = Set([])
 
+if not os.path.exists(source_folder):
+    os.makedirs(source_folder)
+
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
+shutil.copyfile('config.mira', output_folder + 'config.mira')
+
 print 'Reading country metadata...'
 read_countries(source_folder + 'WDI_csv/WDI_Country.csv', country_codes, country_names, country_regions, income_groups)
 print 'Done.'
@@ -276,16 +286,22 @@ print 'Create data tree...'
 var_tree['Keys'] = {'Countries and years':key_vars}
 var_groups.append('Keys')
 read_variables(source_folder + 'WDI_csv/WDI_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
-read_variables(source_folder + 'hnp_stats_csv/HNP_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
-read_variables(source_folder + 'Gender_Stats_csv/Gender_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
-read_education_variables(source_folder + 'Edstats_csv/EDStats_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+if add_hnp: 
+    read_variables(source_folder + 'hnp_stats_csv/HNP_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+if add_genstats:
+    read_variables(source_folder + 'Gender_Stats_csv/Gender_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
+if add_edstats:
+    read_education_variables(source_folder + 'Edstats_csv/EDStats_Series.csv', var_tree, var_groups, var_codes, var_names, var_types)
 print 'Done.'
 
 print 'Reading data...'
 read_data(source_folder + 'WDI_csv/WDI_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
-read_data(source_folder + 'hnp_stats_csv/HNP_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
-read_data(source_folder + 'Gender_Stats_csv/Gender_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
-read_data(source_folder + 'Edstats_csv/Edstat_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+if add_hnp:
+    read_data(source_folder + 'hnp_stats_csv/HNP_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+if add_genstats:
+    read_data(source_folder + 'Gender_Stats_csv/Gender_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
+if add_edstats:
+    read_data(source_folder + 'Edstats_csv/Edstat_Data.csv', all_data, all_years, var_codes, country_codes, missing_vars, missing_countries)
 print 'Done.'
 
 print 'Writing Mirador dataset...'
